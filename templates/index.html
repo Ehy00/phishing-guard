@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Email Detector - Advanced Email Security Analysis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7V11C2 16.5 6.5 21.5 12 23C17.5 21.5 22 16.5 22 11V7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="12" cy="16" r="0.5" fill="currentColor" stroke="currentColor"/>
+                </svg>
+                <h1>Phishing Detector</h1>
+            </div>
+            <p class="tagline">Advanced AI-Powered Email Security Analysis</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="card">
+                    <h2 class="section-title">Analyze Email</h2>
+                    <p class="section-description">Paste your email content below to check for phishing indicators</p>
+                    
+                    <form id="analysisForm">
+                        <div class="form-group">
+                            <label for="sender">From (Sender Email) <span class="optional">Optional</span></label>
+                            <input 
+                                type="email" 
+                                id="sender" 
+                                name="sender" 
+                                placeholder="suspicious@example.com"
+                                class="input-field"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">Subject <span class="optional">Optional</span></label>
+                            <input 
+                                type="text" 
+                                id="subject" 
+                                name="subject" 
+                                placeholder="Enter email subject"
+                                class="input-field"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emailContent">Email Content <span class="required">*</span></label>
+                            <textarea 
+                                id="emailContent" 
+                                name="emailContent" 
+                                rows="12" 
+                                placeholder="Paste the complete email content here..."
+                                class="textarea-field"
+                                required
+                            ></textarea>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M21 21L16.5 16.5M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Analyze Email
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="clearBtn">Clear</button>
+                            <button type="button" class="btn btn-secondary" id="exampleBtn">Load Example</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="card">
+                    <!-- Risk Score Card -->
+                    <div class="risk-score-container" id="riskScoreContainer">
+                        <!-- Populated by JavaScript -->
+                    </div>
+
+                    <!-- Detailed Analysis -->
+                    <div class="analysis-details" id="analysisDetails">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading Indicator -->
+            <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Analyzing email for phishing indicators...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>🛡️ Built with advanced pattern recognition and AI-powered threat detection</p>
+                <p class="footer-note">
+                    <strong>Note:</strong> This tool provides automated analysis. Always use your judgment and report suspicious emails to your IT department.
+                </p>
+                <div class="footer-links">
+                    <a href="https://github.com" target="_blank">GitHub</a>
+                    <span class="separator">•</span>
+                    <a href="#" onclick="showAbout()">About</a>
+                    <span class="separator">•</span>
+                    <a href="#" onclick="showPrivacy()">Privacy</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
