@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phishing Detection Lab</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <h1>Phishing Detection Lab</h1>
+        <p>
+          Paste suspicious emails from your spam folder or public datasets (Nazario,
+          APWG, Kaggle) and get an instant heuristic assessment enriched with URL
+          reputation checks.
+        </p>
+        <div class="hero__cta">
+          <button id="use-sample-email" type="button">Load Sample Email</button>
+          <a
+            href="https://urlscan.io/about-api/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Configure URL Reputation</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="card">
+        <h2>Email Details</h2>
+        <form id="analysis-form">
+          <div class="grid">
+            <label class="field">
+              <span>Subject *</span>
+              <input type="text" id="subject" required />
+            </label>
+            <label class="field">
+              <span>Sender Email</span>
+              <input type="email" id="sender" placeholder="attacker@fake-domain.tld" />
+            </label>
+            <label class="field">
+              <span>Sender Display Name</span>
+              <input type="text" id="sender-name" placeholder="Acme Support" />
+            </label>
+            <label class="field">
+              <span>Reply-To Address</span>
+              <input type="email" id="reply-to" placeholder="support@phishy-mail.com" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span>Email Body *</span>
+            <textarea
+              id="body"
+              rows="10"
+              placeholder="Paste the raw message text, including any suspicious wording."
+              required
+            ></textarea>
+          </label>
+
+          <div class="grid">
+            <label class="field">
+              <span>URLs (one per line)</span>
+              <textarea
+                id="urls"
+                rows="4"
+                placeholder="https://secure-login.example.com&#10;http://192.168.1.22"
+              ></textarea>
+            </label>
+            <label class="field">
+              <span>Attachments (comma separated)</span>
+              <input type="text" id="attachments" placeholder="invoice.pdf, auth-info.exe" />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit" id="analyze-button">Run Analysis</button>
+            <span id="status-indicator" role="status"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Analysis Output</h2>
+        <div id="analysis-output" class="analysis-output">
+          <p>Submit an email to see detection results here.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Experimentation Notes</h2>
+        <ul class="notes">
+          <li>
+            ✅ Train supplemental models with open phishing corpora (Nazario, APWG, Kaggle)
+            and swap them into the pipeline for richer scoring.
+          </li>
+          <li>
+            🔌 Export results as JSON to plug into SIEM tooling or browser extensions.
+          </li>
+          <li>
+            🌐 Convert this UI into a browser add-on using JavaScript if you need inline
+            scanning inside webmail.
+          </li>
+          <li>
+            🧠 Layer an LLM summarizer on top of these heuristics to generate human-readable
+            warnings or to power analyst chatbots.
+          </li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Built with FastAPI, HTML/CSS, and a curious mindset. Stay vigilant.</p>
+    </footer>
+
+    <script>
+      const form = document.getElementById("analysis-form");
+      const output = document.getElementById("analysis-output");
+      const statusIndicator = document.getElementById("status-indicator");
+      const analyzeButton = document.getElementById("analyze-button");
+      const sampleButton = document.getElementById("use-sample-email");
+
+      sampleButton.addEventListener("click", () => {
+        document.getElementById("subject").value =
+          "Urgent: Verify your payroll credentials immediately";
+        document.getElementById("sender").value = "hr-support@payroll-updates.co";
+        document.getElementById("sender-name").value = "Acme HR Desk";
+        document.getElementById("reply-to").value = "helpdesk@payroll-updates.co";
+        document.getElementById("body").value =
+          "Dear employee,\n\nYour payroll account will be suspended within 12 hours. " +
+          "To avoid payment delays please verify your credentials immediately. " +
+          "Failure to act now will lock your account.\n\nFollow this link and login with your company password and PIN.\n";
+        document.getElementById("urls").value =
+          "https://acme-payroll-security.com/login\nhttp://192.168.0.22/reset";
+        document.getElementById("attachments").value = "Payroll-Update-Instructions.scr";
+        output.innerHTML = "<p>Sample loaded. Run the analysis to see results.</p>";
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        statusIndicator.textContent = "Analyzing…";
+        analyzeButton.disabled = true;
+        output.innerHTML = "";
+
+        const payload = {
+          subject: document.getElementById("subject").value.trim(),
+          body: document.getElementById("body").value.trim(),
+          sender: emptyToNull(document.getElementById("sender").value),
+          sender_name: emptyToNull(document.getElementById("sender-name").value),
+          reply_to: emptyToNull(document.getElementById("reply-to").value),
+          urls: splitLines(document.getElementById("urls").value),
+          attachments: splitCsv(document.getElementById("attachments").value),
+        };
+
+        try {
+          const response = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail ?? "Unexpected error");
+          }
+
+          const data = await response.json();
+          renderAnalysis(data);
+          statusIndicator.textContent = "Analysis complete.";
+        } catch (err) {
+          output.innerHTML = `<div class="error">
+            <h3>Something went wrong</h3>
+            <p>${err.message}</p>
+          </div>`;
+          statusIndicator.textContent = "Error encountered.";
+        } finally {
+          analyzeButton.disabled = false;
+        }
+      });
+
+      function renderAnalysis(data) {
+        const levelClass = `risk-badge risk-${data.overall_risk}`;
+        const findings = data.findings
+          .map(
+            (finding) => `
+            <article class="finding">
+              <header>
+                <span class="chip chip-${finding.severity}">${capitalize(
+                  finding.severity
+                )}</span>
+                <h3>${finding.category}</h3>
+              </header>
+              <p>${finding.description}</p>
+              ${
+                finding.evidence.length
+                  ? `<ul>${finding.evidence
+                      .map((item) => `<li>${sanitize(item)}</li>`)
+                      .join("")}</ul>`
+                  : ""
+              }
+            </article>`
+          )
+          .join("");
+
+        const urlBlock = data.url_insights.length
+          ? `<section>
+               <h3>URL Reputation</h3>
+               <ul class="url-insights">
+                 ${data.url_insights
+                   .map(
+                     (entry) => `
+                     <li>
+                       <span>${sanitize(entry.url)}</span>
+                       <span class="chip chip-${entry.status ?? "neutral"}">${
+                         entry.status ?? "unknown"
+                       }</span>
+                       <small>${sanitize(entry.details ?? "No notes available.")}</small>
+                       ${
+                         entry.findings?.length
+                           ? `<ul>${entry.findings
+                               .map((note) => `<li>${sanitize(note)}</li>`)
+                               .join("")}</ul>`
+                           : ""
+                       }
+                     </li>`
+                   )
+                   .join("")}
+               </ul>
+             </section>`
+          : "";
+
+        const recommendations = data.recommendations
+          .map((tip) => `<li>${sanitize(tip)}</li>`)
+          .join("");
+
+        output.innerHTML = `
+          <div class="score-card">
+            <span class="${levelClass}">${capitalize(data.overall_risk)} Risk</span>
+            <span class="score">Score: ${Math.round(data.score)}</span>
+          </div>
+          <section>
+            <h3>Key Findings</h3>
+            ${findings || "<p>No significant issues detected.</p>"}
+          </section>
+          ${urlBlock}
+          <section>
+            <h3>Recommended Actions</h3>
+            <ul>${recommendations}</ul>
+          </section>
+        `;
+      }
+
+      function splitLines(value) {
+        return value
+          .split(/\n|,/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function splitCsv(value) {
+        return value
+          .split(/[,;\n]/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      function emptyToNull(value) {
+        return value && value.trim().length ? value.trim() : null;
+      }
+
+      function capitalize(value) {
+        return value.charAt(0).toUpperCase() + value.slice(1);
+      }
+
+      function sanitize(value) {
+        const div = document.createElement("div");
+        div.textContent = value;
+        return div.innerHTML;
+      }
+    </script>
+  </body>
+</html>
